@@ -230,7 +230,7 @@ static void LORA_HasJoined( void )
   LORA_RequestClass( LORAWAN_DEFAULT_CLASS );
 }
 
-static void Send( void* context )
+static void Send( lora_AppData_t *AppData2 )
 {
   /* USER CODE BEGIN 3 */
   uint16_t pressure = 0;
@@ -263,6 +263,7 @@ static void Send( void* context )
 #endif
 
   BSP_sensor_Read( &sensor_data );
+
 
 #ifdef CAYENNE_LPP
   uint8_t cchannel=0;
@@ -340,10 +341,21 @@ static void Send( void* context )
   AppData.Buff[i++] = altitudeGps & 0xFF;
 #endif  /* REGION_XX915 */
 #endif  /* CAYENNE_LPP */
-  AppData.BuffSize = i;
+
+  if(AppData2 != NULL){
+      PRINTF("SENDING DATA FROM RECEIVED DATA ")
+
+      AppData2->Buff[4] = AppData->Buff[4]++;
+      AppData2->Buff[4] = AppData->Buff[8]++;
+      AppData2->Buff[4] = AppData->Buff[11]++;
+      LORA_send( &AppData2, LORAWAN_DEFAULT_CONFIRM_MSG_STATE);
+  }else{
+      PRINTF("SENDING DATA FROM SEND DATA, NOT PREVIOUS ONE ")
+
+      AppData.BuffSize = i;
   
-  LORA_send( &AppData, LORAWAN_DEFAULT_CONFIRM_MSG_STATE);
-  
+      LORA_send( &AppData, LORAWAN_DEFAULT_CONFIRM_MSG_STATE);
+  }
   /* USER CODE END 3 */
 }
 
@@ -419,6 +431,9 @@ static void LORA_RxData( lora_AppData_t *AppData )
   default:
     break;
   }
+
+  PRINTF("RECEIVED DATA AND SENDING TO SEND FUNCTION")
+  Send( AppData );
   /* USER CODE END 4 */
 }
 
